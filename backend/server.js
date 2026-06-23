@@ -33,21 +33,25 @@ app.use(session({
 }));
 
 // ============================================================================
-// ADMIN USERS DATABASE (In-memory, can be upgraded to DB)
+// ADMIN USERS DATABASE - Advanced
 // ============================================================================
 let adminUsers = {
     'admin': {
         password: process.env.ADMIN_PASSWORD || 'EducationBoard@006',
         role: 'super_admin',
         name: 'Super Administrator',
-        email: 'admin@educationboard.gov.bd'
+        email: 'admin@educationboard.gov.bd',
+        locked: false,
+        createdBy: 'system',
+        createdAt: new Date(),
+        dataFilter: null
     }
 };
 
 // ============================================================================
-// STUDENT DATA (FULL DATABASE)
+// STUDENT DATA WITH TRACKING
 // ============================================================================
-const studentsData = {
+let studentsData = {
     ssc: {
         "310285": {
             roll_no: "310285",
@@ -67,7 +71,8 @@ const studentsData = {
             eiin: "108456",
             inst_name: "Demra Girls High School",
             exam_type: "ssc",
-            display_details: "101:85=A+,109:82=A,136:78=A,137:75=A,138:80=A,150:90=A+,154:72=A-,126:70=A-,134:65=B,147:72=A-,156:88=A+"
+            display_details: "101:85=A+,109:82=A,136:78=A,137:75=A,138:80=A,150:90=A+,154:72=A-,126:70=A-,134:65=B,147:72=A-,156:88=A+",
+            addedBy: "admin"
         },
         "827733": {
             roll_no: "827733",
@@ -87,7 +92,8 @@ const studentsData = {
             eiin: "654321",
             inst_name: "Lalmohon Islamia Dakhil Madrasha",
             exam_type: "ssc",
-            display_details: "101:80=A,109:78=A,136:75=A-,137:72=A-,138:80=A,150:85=A+,154:70=A-,126:68=A-,134:62=B,147:72=A-,156:82=A+"
+            display_details: "101:80=A,109:78=A,136:75=A-,137:72=A-,138:80=A,150:85=A+,154:70=A-,126:68=A-,134:62=B,147:72=A-,156:82=A+",
+            addedBy: "admin"
         },
         "234475": {
             roll_no: "234475",
@@ -107,7 +113,8 @@ const studentsData = {
             eiin: "456789",
             inst_name: "PALASH THANA HIGH SCHOOL",
             exam_type: "ssc",
-            display_details: "101:92=A+,102:88=A+,103:82=A,105:85=A+,106:90=A+,107:78=A,150:86=A+,151:84=A,152:80=A,153:82=A,154:88=A+,114:85=A+"
+            display_details: "101:92=A+,102:88=A+,103:82=A,105:85=A+,106:90=A+,107:78=A,150:86=A+,151:84=A,152:80=A,153:82=A,154:88=A+,114:85=A+",
+            addedBy: "admin"
         }
     },
     hsc: {
@@ -129,7 +136,8 @@ const studentsData = {
             eiin: "109876",
             inst_name: "Govt Abdul Jabber College",
             exam_type: "hsc",
-            display_details: "101:75=A,109:72=A-,136:70=A-,137:68=A-,138:72=A,150:80=A+,154:65=A-,126:62=B,134:58=B,147:65=A-,156:75=A"
+            display_details: "101:75=A,109:72=A-,136:70=A-,137:68=A-,138:72=A,150:80=A+,154:65=A-,126:62=B,134:58=B,147:65=A-,156:75=A",
+            addedBy: "admin"
         }
     }
 };
@@ -157,6 +165,29 @@ const subjectNames = {
     '154': 'ICT',
     '156': 'Career Education'
 };
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+function getStudentsByAdmin(adminUsername) {
+    const admin = adminUsers[adminUsername];
+    const allStudents = [
+        ...Object.values(studentsData.ssc).map(s => ({ ...s, exam_type: 'SSC', id: s.roll_no })),
+        ...Object.values(studentsData.hsc).map(s => ({ ...s, exam_type: 'HSC', id: s.roll_no }))
+    ];
+    
+    // Super admin দেখে সবকিছু
+    if (admin.role === 'super_admin') {
+        return allStudents;
+    }
+    
+    // Sub admin শুধু নিজের data দেখতে পায়
+    if (admin.dataFilter) {
+        return allStudents.filter(s => s.addedBy === adminUsername);
+    }
+    
+    return [];
+}
 
 // ============================================================================
 // API ENDPOINTS
@@ -235,14 +266,24 @@ app.post('/v2/getres', (req, res) => {
 // ============================================================================
 app.post('/admin/login', (req, res) => {
     const { username, password } = req.body;
-    if (adminUsers[username] && adminUsers[username].password === password) {
-        req.session.admin = true;
-        req.session.adminUser = username;
-        req.session.adminRole = adminUsers[username].role;
-        res.json({ success: true, message: 'Login successful' });
-    } else {
-        res.json({ success: false, message: 'Invalid username or password' });
+    const admin = adminUsers[username];
+    
+    if (!admin) {
+        return res.json({ success: false, message: 'Invalid username or password' });
     }
+    
+    if (admin.locked) {
+        return res.json({ success: false, message: 'This account is locked' });
+    }
+    
+    if (admin.password !== password) {
+        return res.json({ success: false, message: 'Invalid username or password' });
+    }
+    
+    req.session.admin = true;
+    req.session.adminUser = username;
+    req.session.adminRole = admin.role;
+    res.json({ success: true, message: 'Login successful' });
 });
 
 app.get('/admin/check', (req, res) => {
@@ -259,7 +300,7 @@ app.post('/admin/logout', (req, res) => {
 });
 
 // ============================================================================
-// ADMIN MANAGEMENT ENDPOINTS
+// ADMIN MANAGEMENT - Super Admin Only
 // ============================================================================
 
 // Get all admins
@@ -271,12 +312,14 @@ app.get('/admin/admins', (req, res) => {
         username,
         name: data.name,
         role: data.role,
-        email: data.email
+        email: data.email,
+        locked: data.locked,
+        createdAt: data.createdAt
     }));
     res.json(admins);
 });
 
-// Change password
+// Change password (any admin can change their own)
 app.post('/admin/change-password', (req, res) => {
     if (!req.session.admin) {
         return res.status(401).json({ success: false, message: 'Not logged in' });
@@ -285,7 +328,7 @@ app.post('/admin/change-password', (req, res) => {
     const { oldPassword, newPassword } = req.body;
     const username = req.session.adminUser;
     
-    if (!adminUsers[username].password === oldPassword) {
+    if (adminUsers[username].password !== oldPassword) {
         return res.json({ success: false, message: 'Current password is incorrect' });
     }
     
@@ -297,13 +340,13 @@ app.post('/admin/change-password', (req, res) => {
     res.json({ success: true, message: 'Password changed successfully' });
 });
 
-// Add sub-admin (only super admin can do this)
+// Add sub-admin (only super admin)
 app.post('/admin/add-subadmin', (req, res) => {
     if (!req.session.admin || req.session.adminRole !== 'super_admin') {
         return res.status(401).json({ success: false, message: 'Only Super Admin can add sub-admins' });
     }
     
-    const { username, password, name, email } = req.body;
+    const { username, password, name, email, allowEdit } = req.body;
     
     if (!username || !password || !name || !email) {
         return res.json({ success: false, message: 'All fields are required' });
@@ -321,10 +364,36 @@ app.post('/admin/add-subadmin', (req, res) => {
         password,
         role: 'sub_admin',
         name,
-        email
+        email,
+        locked: false,
+        createdBy: req.session.adminUser,
+        createdAt: new Date(),
+        dataFilter: !allowEdit,
+        allowEdit: allowEdit || false
     };
     
     res.json({ success: true, message: 'Sub-admin added successfully' });
+});
+
+// Lock/Unlock sub-admin
+app.post('/admin/lock-subadmin', (req, res) => {
+    if (!req.session.admin || req.session.adminRole !== 'super_admin') {
+        return res.status(401).json({ success: false, message: 'Only Super Admin can lock accounts' });
+    }
+    
+    const { username, locked } = req.body;
+    
+    if (username === 'admin') {
+        return res.json({ success: false, message: 'Cannot lock super admin account' });
+    }
+    
+    if (!adminUsers[username]) {
+        return res.json({ success: false, message: 'Admin not found' });
+    }
+    
+    adminUsers[username].locked = locked;
+    const action = locked ? 'locked' : 'unlocked';
+    res.json({ success: true, message: `Admin account ${action}` });
 });
 
 // Delete sub-admin
@@ -347,14 +416,16 @@ app.delete('/admin/subadmin/:username', (req, res) => {
     res.json({ success: true, message: 'Sub-admin deleted successfully' });
 });
 
-// Get all students
+// ============================================================================
+// STUDENT MANAGEMENT
+// ============================================================================
+
+// Get students (filtered by admin role)
 app.get('/admin/students', (req, res) => {
     if (!req.session.admin) return res.status(401).json([]);
-    const allStudents = [
-        ...Object.values(studentsData.ssc).map(s => ({ ...s, exam_type: 'SSC', id: s.roll_no })),
-        ...Object.values(studentsData.hsc).map(s => ({ ...s, exam_type: 'HSC', id: s.roll_no }))
-    ];
-    res.json(allStudents);
+    
+    const students = getStudentsByAdmin(req.session.adminUser);
+    res.json(students);
 });
 
 // Get single student
@@ -368,34 +439,60 @@ app.get('/admin/students/:roll', (req, res) => {
             break;
         }
     }
+    
+    // Check permission
+    const admin = adminUsers[req.session.adminUser];
+    if (admin.role === 'sub_admin' && found.addedBy !== req.session.adminUser) {
+        return res.json({ success: false, message: 'You can only view your own data' });
+    }
+    
     if (found) res.json({ success: true, student: found });
     else res.json({ success: false, message: 'Student not found' });
 });
 
-// Update student
+// Update student (only super admin or sub-admin if allowed)
 app.put('/admin/students/:roll', (req, res) => {
     if (!req.session.admin) return res.status(401).json({ success: false });
+    
     const { roll } = req.params;
+    const admin = adminUsers[req.session.adminUser];
     const updatedData = req.body;
-    let found = false;
+    
+    let found = null;
     for (const exam in studentsData) {
         if (studentsData[exam][roll]) {
-            studentsData[exam][roll] = { ...studentsData[exam][roll], ...updatedData };
-            found = true;
+            found = studentsData[exam][roll];
             break;
         }
     }
-    if (found) res.json({ success: true, message: 'Student updated successfully' });
-    else res.json({ success: false, message: 'Student not found' });
+    
+    if (!found) {
+        return res.json({ success: false, message: 'Student not found' });
+    }
+    
+    // Permission check
+    if (admin.role === 'sub_admin') {
+        return res.json({ success: false, message: 'Sub-admins cannot edit data' });
+    }
+    
+    for (const exam in studentsData) {
+        if (studentsData[exam][roll]) {
+            studentsData[exam][roll] = { ...studentsData[exam][roll], ...updatedData };
+            return res.json({ success: true, message: 'Student updated successfully' });
+        }
+    }
 });
 
 // Add student
 app.post('/admin/students', (req, res) => {
     if (!req.session.admin) return res.status(401).json({ success: false });
+    
     const student = req.body.student;
     if (student && student.roll_no) {
         const examType = student.exam_type || 'ssc';
         if (!studentsData[examType]) studentsData[examType] = {};
+        
+        student.addedBy = req.session.adminUser;
         studentsData[examType][student.roll_no] = student;
         res.json({ success: true, message: 'Student added successfully' });
     } else {
@@ -403,9 +500,15 @@ app.post('/admin/students', (req, res) => {
     }
 });
 
-// Delete student
+// Delete student (only super admin)
 app.delete('/admin/students/:id', (req, res) => {
     if (!req.session.admin) return res.status(401).json({ success: false });
+    
+    const admin = adminUsers[req.session.adminUser];
+    if (admin.role !== 'super_admin') {
+        return res.json({ success: false, message: 'Only Super Admin can delete students' });
+    }
+    
     const { id } = req.params;
     let found = false;
     for (const exam in studentsData) {
@@ -435,23 +538,10 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('');
     console.log('🔐 Admin Accounts:');
     Object.entries(adminUsers).forEach(([user, data]) => {
-        console.log(`   ${user} (${data.role})`);
+        const status = data.locked ? '🔒 LOCKED' : '✅ ACTIVE';
+        console.log(`   ${user} (${data.role}) ${status}`);
     });
     console.log('');
-    console.log('📌 SSC RESULTS:');
-    console.log('   Board: dhaka | Exam: ssc | Year: 2015');
-    console.log('   Roll: 310285 | Reg: 2470092');
-    console.log('   Roll: 827733 | Reg: 258090');
-    console.log('   Board: mymensingh | Exam: ssc | Year: 2001');
-    console.log('   Roll: 234475 | Reg: 336628');
-    console.log('');
-    console.log('📌 HSC RESULT:');
-    console.log('   Board: dhaka | Exam: hsc | Year: 2017');
-    console.log('   Roll: 406020 | Reg: 9200247');
-    console.log('');
-    console.log('🌐 Frontend: http://localhost:3000/');
-    console.log('🔐 Admin Login: http://localhost:3000/login');
-    console.log('👤 Admin Credentials: admin / ' + (process.env.ADMIN_PASSWORD || 'EducationBoard@006'));
     console.log('========================================\n');
 });
 
