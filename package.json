@@ -1,26 +1,30 @@
 {
-  "name": "www-educationboardresults-gov-bd",
-  "version": "2.0.0",
-  "description": "Education Board Result System - Production Ready",
-  "license": "ISC",
-  "author": "",
-  "type": "commonjs",
+  "name": "education-board-results",
+  "version": "1.0.0",
+  "description": "Web Based Result Publication System for Education Board",
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
-    "vercel-build": "npm install"
+    "dev": "nodemon backend/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [
+    "education",
+    "board",
+    "results",
+    "ssc",
+    "hsc"
+  ],
+  "author": "SSInfoTech",
+  "license": "MIT",
   "dependencies": {
-    "body-parser": "^1.20.2",
-    "compression": "^1.7.4",
-    "cors": "^2.8.5",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
-    "helmet": "^7.1.0",
-    "vercel": "^54.15.1",
-    "vercel.json": "^0.1.0"
+    "cors": "^2.8.5",
+    "compression": "^1.7.4",
+    "helmet": "^7.0.0"
   },
-  "engines": {
-    "node": ">=18.0.0"
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }
