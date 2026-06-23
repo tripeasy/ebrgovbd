@@ -39,6 +39,6 @@
     "env": {
         "NODE_ENV": "production",
         "PORT": "3000",
-        "ADMIN_PASSWORD": "YOUR_NEW_PASSWORD_HERE"
+        "ADMIN_PASSWORD": "EducationBoard@006"
     }
 }

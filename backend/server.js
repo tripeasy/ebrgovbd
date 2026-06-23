@@ -222,10 +222,10 @@ app.post('/v2/getres', (req, res) => {
 });
 
 // ============================================================================
-// ADMIN AUTHENTICATION
+// ADMIN AUTHENTICATION - Using Environment Variables
 // ============================================================================
 const adminUsers = {
-    'admin': 'YOUR_NEW_PASSWORD_HERE',
+    'admin': process.env.ADMIN_PASSWORD || 'EducationBoard@006',
     'barisalboard': 'board@2025',
     'dhakaboard': 'dhaka@2025'
 };
@@ -348,8 +348,8 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('   Roll: 406020 | Reg: 9200247');
     console.log('');
     console.log('🌐 Frontend: http://localhost:3000/');
-    console.log('🔐 Admin Login: http://localhost:3000/login.html');
-    console.log('👤 Admin Credentials: admin / admin123');
+    console.log('🔐 Admin Login: http://localhost:3000/login');
+    console.log('👤 Admin Credentials: admin / ' + (process.env.ADMIN_PASSWORD || 'EducationBoard@006'));
     console.log('========================================\n');
 });
 
