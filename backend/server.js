@@ -33,7 +33,7 @@ app.use(session({
 }));
 
 // ============================================================================
-// ADMIN USERS DATABASE - Advanced
+// ADMIN USERS DATABASE
 // ============================================================================
 let adminUsers = {
     'admin': {
@@ -49,7 +49,7 @@ let adminUsers = {
 };
 
 // ============================================================================
-// STUDENT DATA WITH TRACKING
+// STUDENT DATA
 // ============================================================================
 let studentsData = {
     ssc: {
@@ -142,28 +142,14 @@ let studentsData = {
     }
 };
 
-// Subject names mapping
+// Subject names
 const subjectNames = {
-    '101': 'Bangla',
-    '102': 'English',
-    '103': 'Mathematics',
-    '105': 'Social Science',
-    '106': 'Islamic Studies',
-    '107': 'Hindu Religion',
-    '109': 'Mathematics',
-    '114': 'Career Education',
-    '126': 'Higher Math',
-    '134': 'Agriculture Studies',
-    '136': 'Physics',
-    '137': 'Chemistry',
-    '138': 'Biology',
-    '147': 'Physical Education, Health And Sports',
-    '150': 'Bangladesh & Global Studies',
-    '151': 'History',
-    '152': 'Geography',
-    '153': 'Civics',
-    '154': 'ICT',
-    '156': 'Career Education'
+    '101': 'Bangla', '102': 'English', '103': 'Mathematics', '105': 'Social Science',
+    '106': 'Islamic Studies', '107': 'Hindu Religion', '109': 'Mathematics',
+    '114': 'Career Education', '126': 'Higher Math', '134': 'Agriculture Studies',
+    '136': 'Physics', '137': 'Chemistry', '138': 'Biology',
+    '147': 'Physical Education, Health And Sports', '150': 'Bangladesh & Global Studies',
+    '151': 'History', '152': 'Geography', '153': 'Civics', '154': 'ICT', '156': 'Career Education'
 };
 
 // ============================================================================
@@ -176,18 +162,38 @@ function getStudentsByAdmin(adminUsername) {
         ...Object.values(studentsData.hsc).map(s => ({ ...s, exam_type: 'HSC', id: s.roll_no }))
     ];
     
-    // Super admin দেখে সবকিছু
     if (admin.role === 'super_admin') {
         return allStudents;
     }
     
-    // Sub admin শুধু নিজের data দেখতে পায়
     if (admin.dataFilter) {
         return allStudents.filter(s => s.addedBy === adminUsername);
     }
     
     return [];
 }
+
+// ============================================================================
+// PUBLIC ROUTES (HTML)
+// ============================================================================
+
+// Login page
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, '../admin/login.html'));
+});
+
+// Admin dashboard (protected)
+app.get('/admin', (req, res) => {
+    if (!req.session.admin) {
+        return res.redirect('/login');
+    }
+    res.sendFile(path.join(__dirname, '../admin/admin.html'));
+});
+
+// Home page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/home.html'));
+});
 
 // ============================================================================
 // API ENDPOINTS
@@ -300,10 +306,9 @@ app.post('/admin/logout', (req, res) => {
 });
 
 // ============================================================================
-// ADMIN MANAGEMENT - Super Admin Only
+// ADMIN MANAGEMENT
 // ============================================================================
 
-// Get all admins
 app.get('/admin/admins', (req, res) => {
     if (!req.session.admin || req.session.adminRole !== 'super_admin') {
         return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -319,7 +324,6 @@ app.get('/admin/admins', (req, res) => {
     res.json(admins);
 });
 
-// Change password (any admin can change their own)
 app.post('/admin/change-password', (req, res) => {
     if (!req.session.admin) {
         return res.status(401).json({ success: false, message: 'Not logged in' });
@@ -340,7 +344,6 @@ app.post('/admin/change-password', (req, res) => {
     res.json({ success: true, message: 'Password changed successfully' });
 });
 
-// Add sub-admin (only super admin)
 app.post('/admin/add-subadmin', (req, res) => {
     if (!req.session.admin || req.session.adminRole !== 'super_admin') {
         return res.status(401).json({ success: false, message: 'Only Super Admin can add sub-admins' });
@@ -375,7 +378,6 @@ app.post('/admin/add-subadmin', (req, res) => {
     res.json({ success: true, message: 'Sub-admin added successfully' });
 });
 
-// Lock/Unlock sub-admin
 app.post('/admin/lock-subadmin', (req, res) => {
     if (!req.session.admin || req.session.adminRole !== 'super_admin') {
         return res.status(401).json({ success: false, message: 'Only Super Admin can lock accounts' });
@@ -396,7 +398,6 @@ app.post('/admin/lock-subadmin', (req, res) => {
     res.json({ success: true, message: `Admin account ${action}` });
 });
 
-// Delete sub-admin
 app.delete('/admin/subadmin/:username', (req, res) => {
     if (!req.session.admin || req.session.adminRole !== 'super_admin') {
         return res.status(401).json({ success: false, message: 'Only Super Admin can delete admins' });
@@ -420,7 +421,6 @@ app.delete('/admin/subadmin/:username', (req, res) => {
 // STUDENT MANAGEMENT
 // ============================================================================
 
-// Get students (filtered by admin role)
 app.get('/admin/students', (req, res) => {
     if (!req.session.admin) return res.status(401).json([]);
     
@@ -428,7 +428,6 @@ app.get('/admin/students', (req, res) => {
     res.json(students);
 });
 
-// Get single student
 app.get('/admin/students/:roll', (req, res) => {
     if (!req.session.admin) return res.status(401).json({ success: false });
     const { roll } = req.params;
@@ -440,7 +439,6 @@ app.get('/admin/students/:roll', (req, res) => {
         }
     }
     
-    // Check permission
     const admin = adminUsers[req.session.adminUser];
     if (admin.role === 'sub_admin' && found.addedBy !== req.session.adminUser) {
         return res.json({ success: false, message: 'You can only view your own data' });
@@ -450,7 +448,6 @@ app.get('/admin/students/:roll', (req, res) => {
     else res.json({ success: false, message: 'Student not found' });
 });
 
-// Update student (only super admin or sub-admin if allowed)
 app.put('/admin/students/:roll', (req, res) => {
     if (!req.session.admin) return res.status(401).json({ success: false });
     
@@ -470,7 +467,6 @@ app.put('/admin/students/:roll', (req, res) => {
         return res.json({ success: false, message: 'Student not found' });
     }
     
-    // Permission check
     if (admin.role === 'sub_admin') {
         return res.json({ success: false, message: 'Sub-admins cannot edit data' });
     }
@@ -483,7 +479,6 @@ app.put('/admin/students/:roll', (req, res) => {
     }
 });
 
-// Add student
 app.post('/admin/students', (req, res) => {
     if (!req.session.admin) return res.status(401).json({ success: false });
     
@@ -500,7 +495,6 @@ app.post('/admin/students', (req, res) => {
     }
 });
 
-// Delete student (only super admin)
 app.delete('/admin/students/:id', (req, res) => {
     if (!req.session.admin) return res.status(401).json({ success: false });
     
@@ -522,7 +516,7 @@ app.delete('/admin/students/:id', (req, res) => {
 });
 
 // ============================================================================
-// FALLBACK ROUTE
+// CATCH-ALL FALLBACK
 // ============================================================================
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/home.html'));
@@ -534,15 +528,13 @@ app.get('*', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log('\n========================================');
     console.log('✅ Education Board Result System');
-    console.log('========================================');
-    console.log('');
+    console.log('========================================\n');
     console.log('🔐 Admin Accounts:');
     Object.entries(adminUsers).forEach(([user, data]) => {
         const status = data.locked ? '🔒 LOCKED' : '✅ ACTIVE';
         console.log(`   ${user} (${data.role}) ${status}`);
     });
-    console.log('');
-    console.log('========================================\n');
+    console.log('\n========================================\n');
 });
 
 module.exports = app;
