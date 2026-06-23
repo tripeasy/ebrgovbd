@@ -1,80 +1,171 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="cs" lang="cs">
+<html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="robots" content="no,follow">
-    <title>Education Board Exam Management (BEBEM)</title>
+    <meta charset="UTF-8">
+    <title>Admin Login - Education Board Result System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f0f2f5; }
-        .login-container { max-width: 500px; margin: 100px auto; background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); overflow: hidden; }
-        .login-header { background: linear-gradient(135deg, #006a4e, #00843d); color: white; padding: 30px; text-align: center; }
-        .login-header img { width: 80px; margin-bottom: 15px; }
-        .login-header h2 { font-size: 24px; margin-bottom: 5px; }
-        .login-header p { opacity: 0.9; font-size: 14px; }
-        .login-body { padding: 30px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
-        input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; transition: all 0.3s; }
-        input:focus { outline: none; border-color: #006a4e; box-shadow: 0 0 0 3px rgba(0,106,78,0.1); }
-        .btn-login { width: 100%; padding: 12px; background: linear-gradient(135deg, #006a4e, #00843d); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,106,78,0.3); }
-        .error-msg { background: #f8d7da; color: #721c24; padding: 12px; border-radius: 10px; margin-bottom: 20px; display: none; border: 1px solid #f5c6cb; }
-        .login-footer { background: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; }
-        @media (max-width: 576px) { .login-container { margin: 50px 20px; } }
+        body { 
+            background: linear-gradient(135deg, #006a4e, #00843d); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+        }
+        .login-container { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 10px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            width: 100%; 
+            max-width: 400px; 
+        }
+        .login-header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+        }
+        .login-header h2 { 
+            color: #006a4e; 
+            font-weight: bold; 
+            font-size: 24px; 
+        }
+        .login-header p { 
+            color: #666; 
+            font-size: 14px; 
+        }
+        .form-group label { 
+            color: #333; 
+            font-weight: 500; 
+        }
+        .form-control { 
+            padding: 10px 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            font-size: 14px; 
+        }
+        .form-control:focus { 
+            border-color: #006a4e; 
+            box-shadow: 0 0 0 0.2rem rgba(0, 106, 78, 0.25); 
+        }
+        .login-btn { 
+            background: #006a4e; 
+            color: white; 
+            padding: 10px; 
+            border: none; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            width: 100%; 
+            cursor: pointer; 
+            font-size: 16px; 
+        }
+        .login-btn:hover { 
+            background: #005a42; 
+        }
+        .alert { 
+            margin-bottom: 20px; 
+            padding: 12px 15px; 
+            border-radius: 5px; 
+        }
+        .alert-danger { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        .alert-success { 
+            background: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .loading { 
+            display: none; 
+        }
     </style>
 </head>
 <body>
 <div class="login-container">
     <div class="login-header">
-        <h2>Education Board</h2>
-        <p>Exam Management System (BEBEM)</p>
+        <h2>🎓 Admin Login</h2>
+        <p>Education Board Result System</p>
     </div>
-    <div class="login-body">
-        <div id="errorMsg" class="error-msg"></div>
-        <form id="loginForm">
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="username" name="username" required autocomplete="off">
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit" class="btn-login">Login to Dashboard</button>
-        </form>
-    </div>
-    <div class="login-footer">
-        <p>© Bangladesh Education Board Exam Management System | All rights reserved</p>
+    
+    <div id="message"></div>
+    
+    <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" class="form-control" placeholder="admin" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" class="form-control" placeholder="Enter password" required>
+        </div>
+        
+        <button type="submit" class="login-btn" id="loginBtn">
+            <span class="login-text">Login</span>
+            <span class="loading" id="loader">Loading...</span>
+        </button>
+    </form>
+    
+    <div style="text-align: center; margin-top: 20px; color: #666; font-size: 12px;">
+        <p>Demo Credentials:</p>
+        <p>Username: <strong>admin</strong></p>
+        <p>Password: <strong>EducationBoard@006</strong></p>
     </div>
 </div>
+
 <script>
-document.getElementById('loginForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+async function handleLogin(event) {
+    event.preventDefault();
+    
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-    const errorDiv = document.getElementById('errorMsg');
+    const messageDiv = document.getElementById('message');
+    const loginBtn = document.getElementById('loginBtn');
+    const loader = document.getElementById('loader');
+    const loginText = document.querySelector('.login-text');
+    
+    // Show loading
+    loginBtn.disabled = true;
+    loginText.style.display = 'none';
+    loader.style.display = 'inline';
+    messageDiv.innerHTML = '';
     
     try {
-        const response = await fetch('/admin/login', { credentials: 'include', {
+        const response = await fetch('/admin/login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
             body: JSON.stringify({ username, password })
         });
+        
         const data = await response.json();
         
         if (data.success) {
-            window.location.href = '/admin.html';
+            messageDiv.innerHTML = '<div class="alert alert-success">Login successful! Redirecting...</div>';
+            setTimeout(() => {
+                window.location.href = '/admin';
+            }, 1000);
         } else {
-            errorDiv.style.display = 'block';
-            errorDiv.innerHTML = 'Invalid username or password. Please try again.';
-            setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
+            messageDiv.innerHTML = `<div class="alert alert-danger">❌ ${data.message}</div>`;
+            loginBtn.disabled = false;
+            loginText.style.display = 'inline';
+            loader.style.display = 'none';
         }
     } catch (error) {
-        errorDiv.style.display = 'block';
-        errorDiv.innerHTML = 'Login error. Please try again.';
-        setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
+        messageDiv.innerHTML = `<div class="alert alert-danger">❌ Connection error: ${error.message}</div>`;
+        loginBtn.disabled = false;
+        loginText.style.display = 'inline';
+        loader.style.display = 'none';
     }
+}
+
+// Auto-focus on username
+window.addEventListener('load', () => {
+    document.getElementById('username').focus();
 });
 </script>
 </body>
