@@ -225,7 +225,7 @@ app.post('/v2/getres', (req, res) => {
 // ADMIN AUTHENTICATION
 // ============================================================================
 const adminUsers = {
-    'admin': 'admin123',
+    'admin': 'YOUR_NEW_PASSWORD_HERE',
     'barisalboard': 'board@2025',
     'dhakaboard': 'dhaka@2025'
 };

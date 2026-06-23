@@ -20,12 +20,25 @@
             "dest": "/backend/server.js"
         },
         {
+            "src": "/(.*)\\.html?$",
+            "status": 404
+        },
+        {
+            "src": "/login",
+            "dest": "/frontend/login.html"
+        },
+        {
+            "src": "/admin",
+            "dest": "/admin/admin.html"
+        },
+        {
             "src": "/(.*)",
             "dest": "/backend/server.js"
         }
     ],
     "env": {
         "NODE_ENV": "production",
-        "PORT": "3000"
+        "PORT": "3000",
+        "ADMIN_PASSWORD": "YOUR_NEW_PASSWORD_HERE"
     }
 }

@@ -192,7 +192,7 @@ let studentsData = [];
 
 async function checkAuth() {
     try {
-        const res = await fetch('/admin/check');
+        const res = await fetch('/api/auth/check');
         const data = await res.json();
         if (!data.loggedIn) window.location.href = '/login.html';
     } catch(e) { window.location.href = '/login.html'; }
