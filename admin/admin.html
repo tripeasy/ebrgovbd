@@ -192,7 +192,7 @@ let studentsData = [];
 
 async function checkAuth() {
     try {
-        const res = await fetch('/api/auth/check');
+        const res = await fetch('/admin/check', { credentials: 'include' });
         const data = await res.json();
         if (!data.loggedIn) window.location.href = '/login.html';
     } catch(e) { window.location.href = '/login.html'; }
@@ -200,7 +200,7 @@ async function checkAuth() {
 
 async function loadStudents() {
     try {
-        const res = await fetch('/admin/students');
+        const res = await fetch('/admin/students', { credentials: 'include' });
         studentsData = await res.json();
         updateStats();
         displayStudents(studentsData);
@@ -355,7 +355,7 @@ document.getElementById('addStudentForm')?.addEventListener('submit', async func
 });
 
 function logout() { 
-    fetch('/admin/logout', { method: 'POST' }).then(() => window.location.href = '/login.html'); 
+    fetch('/admin/logout', { credentials: 'include' }, { method: 'POST' }).then(() => window.location.href = '/login.html'); 
 }
 
 function saveSettings() { 
