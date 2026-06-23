@@ -33,6 +33,18 @@ app.use(session({
 }));
 
 // ============================================================================
+// ADMIN USERS DATABASE (In-memory, can be upgraded to DB)
+// ============================================================================
+let adminUsers = {
+    'admin': {
+        password: process.env.ADMIN_PASSWORD || 'EducationBoard@006',
+        role: 'super_admin',
+        name: 'Super Administrator',
+        email: 'admin@educationboard.gov.bd'
+    }
+};
+
+// ============================================================================
 // STUDENT DATA (FULL DATABASE)
 // ============================================================================
 const studentsData = {
@@ -198,15 +210,12 @@ app.post('/v2/getres', (req, res) => {
     const { roll, reg, board, exam, year } = req.body;
     let studentData = null;
     
-    // Search in SSC
     if (exam === 'ssc' && studentsData.ssc[roll]) {
         studentData = studentsData.ssc[roll];
     } 
-    // Search in HSC
     else if (exam === 'hsc' && studentsData.hsc[roll]) {
         studentData = studentsData.hsc[roll];
     }
-    // Search in both if exam not specified
     else {
         if (studentsData.ssc[roll]) {
             studentData = studentsData.ssc[roll];
@@ -222,19 +231,14 @@ app.post('/v2/getres', (req, res) => {
 });
 
 // ============================================================================
-// ADMIN AUTHENTICATION - Using Environment Variables
+// ADMIN AUTHENTICATION
 // ============================================================================
-const adminUsers = {
-    'admin': process.env.ADMIN_PASSWORD || 'EducationBoard@006',
-    'barisalboard': 'board@2025',
-    'dhakaboard': 'dhaka@2025'
-};
-
 app.post('/admin/login', (req, res) => {
     const { username, password } = req.body;
-    if (adminUsers[username] && adminUsers[username] === password) {
+    if (adminUsers[username] && adminUsers[username].password === password) {
         req.session.admin = true;
         req.session.adminUser = username;
+        req.session.adminRole = adminUsers[username].role;
         res.json({ success: true, message: 'Login successful' });
     } else {
         res.json({ success: false, message: 'Invalid username or password' });
@@ -242,12 +246,105 @@ app.post('/admin/login', (req, res) => {
 });
 
 app.get('/admin/check', (req, res) => {
-    res.json({ loggedIn: !!req.session.admin });
+    res.json({ 
+        loggedIn: !!req.session.admin,
+        username: req.session.adminUser,
+        role: req.session.adminRole
+    });
 });
 
 app.post('/admin/logout', (req, res) => {
     req.session.destroy();
     res.json({ success: true });
+});
+
+// ============================================================================
+// ADMIN MANAGEMENT ENDPOINTS
+// ============================================================================
+
+// Get all admins
+app.get('/admin/admins', (req, res) => {
+    if (!req.session.admin || req.session.adminRole !== 'super_admin') {
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    const admins = Object.entries(adminUsers).map(([username, data]) => ({
+        username,
+        name: data.name,
+        role: data.role,
+        email: data.email
+    }));
+    res.json(admins);
+});
+
+// Change password
+app.post('/admin/change-password', (req, res) => {
+    if (!req.session.admin) {
+        return res.status(401).json({ success: false, message: 'Not logged in' });
+    }
+    
+    const { oldPassword, newPassword } = req.body;
+    const username = req.session.adminUser;
+    
+    if (!adminUsers[username].password === oldPassword) {
+        return res.json({ success: false, message: 'Current password is incorrect' });
+    }
+    
+    if (newPassword.length < 6) {
+        return res.json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+    
+    adminUsers[username].password = newPassword;
+    res.json({ success: true, message: 'Password changed successfully' });
+});
+
+// Add sub-admin (only super admin can do this)
+app.post('/admin/add-subadmin', (req, res) => {
+    if (!req.session.admin || req.session.adminRole !== 'super_admin') {
+        return res.status(401).json({ success: false, message: 'Only Super Admin can add sub-admins' });
+    }
+    
+    const { username, password, name, email } = req.body;
+    
+    if (!username || !password || !name || !email) {
+        return res.json({ success: false, message: 'All fields are required' });
+    }
+    
+    if (adminUsers[username]) {
+        return res.json({ success: false, message: 'Username already exists' });
+    }
+    
+    if (password.length < 6) {
+        return res.json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+    
+    adminUsers[username] = {
+        password,
+        role: 'sub_admin',
+        name,
+        email
+    };
+    
+    res.json({ success: true, message: 'Sub-admin added successfully' });
+});
+
+// Delete sub-admin
+app.delete('/admin/subadmin/:username', (req, res) => {
+    if (!req.session.admin || req.session.adminRole !== 'super_admin') {
+        return res.status(401).json({ success: false, message: 'Only Super Admin can delete admins' });
+    }
+    
+    const { username } = req.params;
+    
+    if (username === 'admin') {
+        return res.json({ success: false, message: 'Cannot delete super admin account' });
+    }
+    
+    if (!adminUsers[username]) {
+        return res.json({ success: false, message: 'Admin not found' });
+    }
+    
+    delete adminUsers[username];
+    res.json({ success: true, message: 'Sub-admin deleted successfully' });
 });
 
 // Get all students
@@ -335,6 +432,11 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('\n========================================');
     console.log('✅ Education Board Result System');
     console.log('========================================');
+    console.log('');
+    console.log('🔐 Admin Accounts:');
+    Object.entries(adminUsers).forEach(([user, data]) => {
+        console.log(`   ${user} (${data.role})`);
+    });
     console.log('');
     console.log('📌 SSC RESULTS:');
     console.log('   Board: dhaka | Exam: ssc | Year: 2015');
