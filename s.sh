@@ -1,3 +1,15 @@
+#!/bin/bash
+
+echo "🔧 Starting Complete Backend Rebuild..."
+echo "════════════════════════════════════════"
+
+cd ~/www-educationboardresults-gov-bd || exit
+
+# Backup old file
+cp backend/server.js backend/server.js.backup 2>/dev/null
+
+# Create complete backend/server.js
+cat > backend/server.js << 'EOF'
 const express = require('express');
 const session = require('express-session');
 const helmet = require('helmet');
@@ -447,3 +459,32 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+EOF
+
+echo "✅ backend/server.js completely rebuilt"
+
+# Install helmet if not already installed
+echo "📦 Ensuring Helmet is installed..."
+npm install helmet --save
+
+echo "════════════════════════════════════════"
+echo "✅ COMPLETE BACKEND REBUILD FINISHED!"
+echo "════════════════════════════════════════"
+echo ""
+echo "✨ Features Added:"
+echo "  ✅ CORS fully configured"
+echo "  ✅ Role-based access control (RBAC)"
+echo "  ✅ Super Admin & Sub-Admin roles"
+echo "  ✅ Admin users database"
+echo "  ✅ Student data structure"
+echo "  ✅ SSC exam data"
+echo "  ✅ HSC exam data"
+echo "  ✅ Data filtering by role"
+echo "  ✅ Edit permission control"
+echo "  ✅ Account lock/unlock feature"
+echo "  ✅ Password change endpoint"
+echo "  ✅ Session management"
+echo "  ✅ Helmet security"
+echo "  ✅ JSON parser"
+echo ""
+echo "🚀 Ready for deployment!"

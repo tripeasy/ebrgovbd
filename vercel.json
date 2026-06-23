@@ -1,44 +1,23 @@
 {
-    "version": 2,
-    "builds": [
-        {
-            "src": "backend/server.js",
-            "use": "@vercel/node"
-        }
-    ],
-    "routes": [
-        {
-            "src": "/api/(.*)",
-            "dest": "/backend/server.js"
-        },
-        {
-            "src": "/v2/(.*)",
-            "dest": "/backend/server.js"
-        },
-        {
-            "src": "/admin/(.*)",
-            "dest": "/backend/server.js"
-        },
-        {
-            "src": "/login",
-            "dest": "/admin/login.html"
-        },
-        {
-            "src": "/admin",
-            "dest": "/admin/admin.html"
-        },
-        {
-            "src": "/(.*)\\.html?$",
-            "status": 404
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/backend/server.js"
-        }
-    ],
-    "env": {
-        "NODE_ENV": "production",
-        "PORT": "3000",
-        "ADMIN_PASSWORD": "EducationBoard@006"
+  "version": 2,
+  "builds": [
+    {
+      "src": "backend/server.js",
+      "use": "@vercel/node"
     }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/$1"
+    }
+  ],
+  "env": {
+    "ADMIN_PASSWORD": "@admin_password",
+    "NODE_ENV": "production"
+  }
 }
