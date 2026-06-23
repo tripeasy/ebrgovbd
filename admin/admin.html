@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Education Board Result System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        body { background: #f0f2f5; font-family: 'Segoe UI', Arial, sans-serif; }
+        .admin-header { background: linear-gradient(135deg, #006a4e, #00843d); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .admin-header h2 { margin: 0; font-size: 20px; }
+        .logout-btn { background: #dc3545; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
+        .logout-btn:hover { background: #c82333; }
+        .dashboard-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px; }
+        .stat-card { background: white; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-left: 4px solid #006a4e; }
+        .stat-number { font-size: 32px; font-weight: bold; color: #006a4e; }
+        .stat-label { color: #666; margin-top: 5px; }
+        .content-panel { background: white; border-radius: 10px; margin: 20px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .nav-tabs { border-bottom: 2px solid #dee2e6; }
+        .nav-tabs > li > a { color: #333; font-weight: 500; border: none; }
+        .nav-tabs > li.active > a { color: #006a4e; border-bottom: 2px solid #006a4e; background: transparent; }
+        .student-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .student-table th, .student-table td { padding: 12px; text-align: left; border-bottom: 1px solid #dee2e6; }
+        .student-table th { background: #f8f9fa; font-weight: 600; }
+        .student-table tr:hover { background: #f5f5f5; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 5px; margin: 2px; border: none; cursor: pointer; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-primary { background: #006a4e; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-success { background: #28a745; color: white; }
+        .form-control { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 30px auto; padding: 25px; width: 90%; max-width: 700px; border-radius: 10px; max-height: 85vh; overflow-y: auto; }
+        .close { float: right; font-size: 28px; cursor: pointer; color: #aaa; }
+        .close:hover { color: #000; }
+        @media (max-width: 768px) { .dashboard-stats { grid-template-columns: 1fr; } .student-table { font-size: 12px; } }
+    </style>
+</head>
+<body>
+<div class="admin-header">
+    <h2><i class="fa fa-graduation-cap"></i> Education Board Result System - Admin Dashboard</h2>
+    <button class="logout-btn" onclick="logout()"><i class="fa fa-sign-out"></i> Logout</button>
+</div>
+
+<div class="dashboard-stats">
+    <div class="stat-card"><div class="stat-number" id="totalStudents">0</div><div class="stat-label">Total Students</div></div>
+    <div class="stat-card"><div class="stat-number" id="totalSSC">0</div><div class="stat-label">SSC Students</div></div>
+    <div class="stat-card"><div class="stat-number" id="totalHSC">0</div><div class="stat-label">HSC Students</div></div>
+    <div class="stat-card"><div class="stat-number" id="avgGPA">0</div><div class="stat-label">Average GPA</div></div>
+</div>
+
+<div class="content-panel">
+    <ul class="nav nav-tabs">
+        <li class="active"><a data-toggle="tab" href="#students">Student Records</a></li>
+        <li><a data-toggle="tab" href="#addStudent">Add New Student</a></li>
+        <li><a data-toggle="tab" href="#settings">Settings</a></li>
+    </ul>
+    <div class="tab-content">
+        <div id="students" class="tab-pane fade in active">
+            <div style="margin: 15px 0;">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search by Roll, Name, or Registration..." style="width: 300px; display: inline-block;">
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="student-table" id="studentsTable">
+                    <thead>
+                        <tr><th>Roll</th><th>Name</th><th>Father's Name</th><th>Board</th><th>Exam</th><th>Year</th><th>GPA</th><th>Institute</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="studentsList"></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="addStudent" class="tab-pane fade">
+            <form id="addStudentForm">
+                <div class="row"><div class="col-md-6"><input type="text" name="roll_no" class="form-control" placeholder="Roll Number" required></div><div class="col-md-6"><input type="text" name="reg_no" class="form-control" placeholder="Registration Number" required></div></div>
+                <div class="row"><div class="col-md-6"><input type="text" name="name" class="form-control" placeholder="Full Name" required></div><div class="col-md-6"><input type="text" name="fname" class="form-control" placeholder="Father's Name"></div></div>
+                <div class="row"><div class="col-md-6"><input type="text" name="mname" class="form-control" placeholder="Mother's Name"></div><div class="col-md-6"><select name="board_name" class="form-control" required><option value="">Select Board</option><option value="DHAKA">Dhaka</option><option value="BARISAL">Barisal</option><option value="MYMENSINGH">Mymensingh</option><option value="RAJSHAHI">Rajshahi</option></select></div></div>
+                <div class="row"><div class="col-md-4"><select name="exam_type" class="form-control" required><option value="">Exam Type</option><option value="ssc">SSC</option><option value="hsc">HSC</option></select></div><div class="col-md-4"><input type="text" name="year" class="form-control" placeholder="Year" required></div><div class="col-md-4"><input type="text" name="gpa" class="form-control" placeholder="GPA" required></div></div>
+                <div class="row"><div class="col-md-6"><input type="text" name="session" class="form-control" placeholder="Session"></div><div class="col-md-6"><input type="text" name="inst_name" class="form-control" placeholder="Institute Name"></div></div>
+                <div class="row"><div class="col-md-6"><input type="text" name="dob" class="form-control" placeholder="Date of Birth (DD-MM-YYYY)"></div><div class="col-md-6"><input type="text" name="stud_group" class="form-control" placeholder="Group"></div></div>
+                <textarea name="display_details" rows="4" class="form-control" placeholder="Subject details (format: code:marks=grade,code:marks=grade)"></textarea>
+                <button type="submit" class="btn-primary" style="margin-top: 15px;">Add Student</button>
+                <div id="addMsg" style="margin-top: 10px;"></div>
+            </form>
+        </div>
+        <div id="settings" class="tab-pane fade">
+            <h4>System Settings</h4>
+            <div class="form-group"><label>Site Title</label><input type="text" id="siteTitle" class="form-control" value="WEB BASED RESULT PUBLICATION SYSTEM FOR EDUCATION BOARD"></div>
+            <div class="form-group"><label>Footer Text</label><textarea id="footerText" rows="3" class="form-control">Powered by Inter-Education Board Coordination Committee</textarea></div>
+            <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3><i class="fa fa-edit"></i> Edit Student</h3>
+        <hr>
+        <form id="editForm">
+            <input type="hidden" id="editRoll">
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Roll Number</label>
+                    <input type="text" id="editRollNo" class="form-control" readonly>
+                </div>
+                <div class="col-md-6">
+                    <label>Registration Number</label>
+                    <input type="text" id="editRegNo" class="form-control">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Full Name</label>
+                    <input type="text" id="editName" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label>Father's Name</label>
+                    <input type="text" id="editFname" class="form-control">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Mother's Name</label>
+                    <input type="text" id="editMname" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label>Board</label>
+                    <select id="editBoard" class="form-control">
+                        <option value="DHAKA">Dhaka</option>
+                        <option value="BARISAL">Barisal</option>
+                        <option value="MYMENSINGH">Mymensingh</option>
+                        <option value="RAJSHAHI">Rajshahi</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <label>Exam Type</label>
+                    <select id="editExamType" class="form-control">
+                        <option value="ssc">SSC</option>
+                        <option value="hsc">HSC</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label>Year</label>
+                    <input type="text" id="editYear" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <label>GPA</label>
+                    <input type="text" id="editGPA" class="form-control" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Session</label>
+                    <input type="text" id="editSession" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label>Institute Name</label>
+                    <input type="text" id="editInstitute" class="form-control">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Date of Birth</label>
+                    <input type="text" id="editDob" class="form-control" placeholder="DD-MM-YYYY">
+                </div>
+                <div class="col-md-6">
+                    <label>Group</label>
+                    <input type="text" id="editGroup" class="form-control">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <label>Subject Details (code:marks=grade,code:marks=grade)</label>
+                    <textarea id="editDetails" rows="3" class="form-control"></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 15px; width: 100%;">
+                <i class="fa fa-save"></i> Update Student
+            </button>
+            <div id="editMsg" style="margin-top: 10px;"></div>
+        </form>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<script>
+let studentsData = [];
+
+async function checkAuth() {
+    try {
+        const res = await fetch('/admin/check');
+        const data = await res.json();
+        if (!data.loggedIn) window.location.href = '/login.html';
+    } catch(e) { window.location.href = '/login.html'; }
+}
+
+async function loadStudents() {
+    try {
+        const res = await fetch('/admin/students');
+        studentsData = await res.json();
+        updateStats();
+        displayStudents(studentsData);
+    } catch(e) { console.error('Error loading students:', e); }
+}
+
+function updateStats() {
+    const sscCount = studentsData.filter(s => s.exam_type === 'SSC').length;
+    const hscCount = studentsData.filter(s => s.exam_type === 'HSC').length;
+    const totalGPA = studentsData.reduce((sum, s) => sum + parseFloat(s.gpa || 0), 0);
+    const avgGPA = studentsData.length ? (totalGPA / studentsData.length).toFixed(2) : 0;
+    document.getElementById('totalStudents').innerText = studentsData.length;
+    document.getElementById('totalSSC').innerText = sscCount;
+    document.getElementById('totalHSC').innerText = hscCount;
+    document.getElementById('avgGPA').innerText = avgGPA;
+}
+
+function displayStudents(students) {
+    const tbody = document.getElementById('studentsList');
+    tbody.innerHTML = students.map(s => `
+        <tr>
+            <td>${s.roll_no}</td>
+            <td>${s.name}</td>
+            <td>${s.fname || '-'}</td>
+            <td>${s.board_name}</td>
+            <td>${s.exam_type}</td>
+            <td>${s.year}</td>
+            <td>${s.gpa}</td>
+            <td>${s.inst_name || '-'}</td>
+            <td>
+                <button class="btn-sm btn-warning" onclick="editStudent('${s.roll_no}')"><i class="fa fa-edit"></i> Edit</button>
+                <button class="btn-sm btn-danger" onclick="deleteStudent('${s.roll_no}')"><i class="fa fa-trash"></i> Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+document.getElementById('searchInput')?.addEventListener('keyup', function(e) {
+    const search = e.target.value.toLowerCase();
+    const filtered = studentsData.filter(s => 
+        s.roll_no.includes(search) || 
+        s.name.toLowerCase().includes(search) || 
+        (s.reg_no && s.reg_no.includes(search))
+    );
+    displayStudents(filtered);
+});
+
+async function editStudent(roll) {
+    try {
+        const res = await fetch(`/admin/students/${roll}`);
+        const data = await res.json();
+        if (data.success) {
+            const s = data.student;
+            document.getElementById('editRoll').value = s.roll_no;
+            document.getElementById('editRollNo').value = s.roll_no;
+            document.getElementById('editRegNo').value = s.reg_no || '';
+            document.getElementById('editName').value = s.name || '';
+            document.getElementById('editFname').value = s.fname || '';
+            document.getElementById('editMname').value = s.mname || '';
+            document.getElementById('editBoard').value = s.board_name || 'DHAKA';
+            document.getElementById('editExamType').value = s.exam_type || 'ssc';
+            document.getElementById('editYear').value = s.year || '';
+            document.getElementById('editGPA').value = s.gpa || '';
+            document.getElementById('editSession').value = s.session || '';
+            document.getElementById('editInstitute').value = s.inst_name || '';
+            document.getElementById('editDob').value = s.dob || '';
+            document.getElementById('editGroup').value = s.stud_group || '';
+            document.getElementById('editDetails').value = s.display_details || '';
+            document.getElementById('editModal').style.display = 'block';
+            document.getElementById('editMsg').innerHTML = '';
+        } else {
+            alert('Student not found');
+        }
+    } catch(e) {
+        alert('Error loading student data');
+    }
+}
+
+function closeModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+document.getElementById('editForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const roll = document.getElementById('editRoll').value;
+    const updatedData = {
+        reg_no: document.getElementById('editRegNo').value,
+        name: document.getElementById('editName').value,
+        fname: document.getElementById('editFname').value,
+        mname: document.getElementById('editMname').value,
+        board_name: document.getElementById('editBoard').value,
+        exam_type: document.getElementById('editExamType').value,
+        year: document.getElementById('editYear').value,
+        gpa: document.getElementById('editGPA').value,
+        session: document.getElementById('editSession').value,
+        inst_name: document.getElementById('editInstitute').value,
+        dob: document.getElementById('editDob').value,
+        stud_group: document.getElementById('editGroup').value,
+        display_details: document.getElementById('editDetails').value
+    };
+    
+    try {
+        const res = await fetch(`/admin/students/${roll}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
+        const result = await res.json();
+        if (result.success) {
+            document.getElementById('editMsg').innerHTML = '<div class="alert alert-success">Student updated successfully!</div>';
+            setTimeout(() => { closeModal(); loadStudents(); }, 1500);
+        } else {
+            document.getElementById('editMsg').innerHTML = '<div class="alert alert-danger">Error updating student</div>';
+        }
+    } catch(e) {
+        document.getElementById('editMsg').innerHTML = '<div class="alert alert-danger">Error updating student</div>';
+    }
+});
+
+async function deleteStudent(roll) {
+    if(confirm('Delete this student record?')) {
+        try {
+            await fetch(`/admin/students/${roll}`, { method: 'DELETE' });
+            loadStudents();
+        } catch(e) { alert('Error deleting student'); }
+    }
+}
+
+document.getElementById('addStudentForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {};
+    formData.forEach((v, k) => data[k] = v);
+    try {
+        const res = await fetch('/admin/students', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ student: data }) 
+        });
+        const result = await res.json();
+        if(result.success) { 
+            document.getElementById('addMsg').innerHTML = '<div class="alert alert-success">Student added!</div>'; 
+            e.target.reset(); 
+            loadStudents(); 
+            setTimeout(() => document.getElementById('addMsg').innerHTML = '', 3000); 
+        } else {
+            document.getElementById('addMsg').innerHTML = '<div class="alert alert-danger">Error adding student</div>';
+        }
+    } catch(e) { 
+        document.getElementById('addMsg').innerHTML = '<div class="alert alert-danger">Error</div>'; 
+    }
+});
+
+function logout() { 
+    fetch('/admin/logout', { method: 'POST' }).then(() => window.location.href = '/login.html'); 
+}
+
+function saveSettings() { 
+    alert('Settings saved locally'); 
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('editModal');
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+
+checkAuth();
+loadStudents();
+</script>
+</body>
+</html>

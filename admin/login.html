@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="cs" lang="cs">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="robots" content="no,follow">
+    <title>Education Board Exam Management (BEBEM)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; }
+        .login-container { max-width: 500px; margin: 100px auto; background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); overflow: hidden; }
+        .login-header { background: linear-gradient(135deg, #006a4e, #00843d); color: white; padding: 30px; text-align: center; }
+        .login-header img { width: 80px; margin-bottom: 15px; }
+        .login-header h2 { font-size: 24px; margin-bottom: 5px; }
+        .login-header p { opacity: 0.9; font-size: 14px; }
+        .login-body { padding: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+        input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; transition: all 0.3s; }
+        input:focus { outline: none; border-color: #006a4e; box-shadow: 0 0 0 3px rgba(0,106,78,0.1); }
+        .btn-login { width: 100%; padding: 12px; background: linear-gradient(135deg, #006a4e, #00843d); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,106,78,0.3); }
+        .error-msg { background: #f8d7da; color: #721c24; padding: 12px; border-radius: 10px; margin-bottom: 20px; display: none; border: 1px solid #f5c6cb; }
+        .login-footer { background: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; }
+        @media (max-width: 576px) { .login-container { margin: 50px 20px; } }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <div class="login-header">
+        <h2>Education Board</h2>
+        <p>Exam Management System (BEBEM)</p>
+    </div>
+    <div class="login-body">
+        <div id="errorMsg" class="error-msg"></div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="username" name="username" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn-login">Login to Dashboard</button>
+        </form>
+    </div>
+    <div class="login-footer">
+        <p>© Bangladesh Education Board Exam Management System | All rights reserved</p>
+    </div>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const errorDiv = document.getElementById('errorMsg');
+    
+    try {
+        const response = await fetch('/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            window.location.href = '/admin.html';
+        } else {
+            errorDiv.style.display = 'block';
+            errorDiv.innerHTML = 'Invalid username or password. Please try again.';
+            setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
+        }
+    } catch (error) {
+        errorDiv.style.display = 'block';
+        errorDiv.innerHTML = 'Login error. Please try again.';
+        setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
+    }
+});
+</script>
+</body>
+</html>
