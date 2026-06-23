@@ -2,18 +2,22 @@
   "name": "www-educationboardresults-gov-bd",
   "version": "2.0.0",
   "description": "Education Board Result System - Production Ready",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
     "vercel-build": "npm install"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "express-session": "^1.17.3",
-    "cors": "^2.8.5",
     "body-parser": "^1.20.2",
     "compression": "^1.7.4",
-    "helmet": "^7.1.0"
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "helmet": "^7.1.0",
+    "vercel.json": "^0.1.0"
   },
   "engines": {
     "node": ">=18.0.0"
