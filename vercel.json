@@ -20,18 +20,6 @@
             "dest": "/backend/server.js"
         },
         {
-            "src": "/(.*)\\.html?$",
-            "status": 404
-        },
-        {
-            "src": "/login",
-            "dest": "/frontend/login.html"
-        },
-        {
-            "src": "/admin",
-            "dest": "/admin/admin.html"
-        },
-        {
             "src": "/(.*)",
             "dest": "/backend/server.js"
         }
