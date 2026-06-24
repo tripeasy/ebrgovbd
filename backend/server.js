@@ -8,24 +8,15 @@ const helmet = require('helmet');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ============================================================================
-// MIDDLEWARE
-// ============================================================================
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
-}));
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 app.use(compression());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cors());
-
-// Static files - MUST be before routes
 app.use(express.static(path.join(__dirname, '../frontend')));
 app.use(express.static(path.join(__dirname, '../admin')));
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Session
 app.use(session({
     secret: 'edu_board_secret_key_2025_secure',
     resave: false,
@@ -34,9 +25,21 @@ app.use(session({
 }));
 
 // ============================================================================
-// STUDENT DATA
+// DATABASE
 // ============================================================================
-const studentsData = {
+let adminUsers = {
+    'admin': {
+        password: 'admin123',
+        role: 'super_admin',
+        name: 'Super Administrator',
+        email: 'admin@educationboard.gov.bd',
+        locked: false,
+        createdBy: 'system',
+        createdAt: new Date()
+    }
+};
+
+let studentsData = {
     ssc: {
         "310285": {
             roll_no: "310285", reg_no: "2470092", name: "GAHANARAF AKTER JUMA",
@@ -45,7 +48,8 @@ const studentsData = {
             stud_type: "REGULAR", stud_sex: "Female", dob: "18-02-1999",
             res_detail: "P", gpa: "4.31", eiin: "108456",
             inst_name: "Demra Girls High School", exam_type: "ssc",
-            display_details: "101:85=A+,109:82=A,136:78=A,137:75=A,138:80=A,150:90=A+,154:72=A-,126:70=A-,134:65=B,147:72=A-,156:88=A+"
+            display_details: "101:85=A+,109:82=A,136:78=A,137:75=A,138:80=A,150:90=A+,154:72=A-,126:70=A-,134:65=B,147:72=A-,156:88=A+",
+            addedBy: "admin"
         },
         "827733": {
             roll_no: "827733", reg_no: "258090", name: "GAHANARAF AKTER JUMA",
@@ -54,7 +58,8 @@ const studentsData = {
             stud_type: "REGULAR", stud_sex: "Female", dob: "18-02-1999",
             res_detail: "P", gpa: "4.00", eiin: "654321",
             inst_name: "Lalmohon Islamia Dakhil Madrasha", exam_type: "ssc",
-            display_details: "101:80=A,109:78=A,136:75=A-,137:72=A-,138:80=A,150:85=A+,154:70=A-,126:68=A-,134:62=B,147:72=A-,156:82=A+"
+            display_details: "101:80=A,109:78=A,136:75=A-,137:72=A-,138:80=A,150:85=A+,154:70=A-,126:68=A-,134:62=B,147:72=A-,156:82=A+",
+            addedBy: "admin"
         },
         "234475": {
             roll_no: "234475", reg_no: "336628", name: "SHIPAN DAS",
@@ -63,7 +68,8 @@ const studentsData = {
             stud_type: "REGULAR", stud_sex: "Male", dob: "01-01-1984",
             res_detail: "P", gpa: "4.50", eiin: "456789",
             inst_name: "PALASH THANA HIGH SCHOOL", exam_type: "ssc",
-            display_details: "101:92=A+,102:88=A+,103:82=A,105:85=A+,106:90=A+,107:78=A,150:86=A+,151:84=A,152:80=A,153:82=A,154:88=A+,114:85=A+"
+            display_details: "101:92=A+,102:88=A+,103:82=A,105:85=A+,106:90=A+,107:78=A,150:86=A+,151:84=A,152:80=A,153:82=A,154:88=A+,114:85=A+",
+            addedBy: "admin"
         }
     },
     hsc: {
@@ -74,7 +80,8 @@ const studentsData = {
             stud_type: "REGULAR", stud_sex: "Female", dob: "18-02-1999",
             res_detail: "P", gpa: "3.70", eiin: "109876",
             inst_name: "Govt Abdul Jabber College", exam_type: "hsc",
-            display_details: "101:75=A,109:72=A-,136:70=A-,137:68=A-,138:72=A,150:80=A+,154:65=A-,126:62=B,134:58=B,147:65=A-,156:75=A"
+            display_details: "101:75=A,109:72=A-,136:70=A-,137:68=A-,138:72=A,150:80=A+,154:65=A-,126:62=B,134:58=B,147:65=A-,156:75=A",
+            addedBy: "admin"
         }
     }
 };
@@ -84,48 +91,32 @@ const subjectNames = {
     '106': 'Islamic Studies', '107': 'Hindu Religion', '109': 'Mathematics',
     '114': 'Career Education', '126': 'Higher Math', '134': 'Agriculture Studies',
     '136': 'Physics', '137': 'Chemistry', '138': 'Biology',
-    '147': 'Physical Education, Health And Sports', '150': 'Bangladesh & Global Studies',
+    '147': 'Physical Education', '150': 'Bangladesh & Global Studies',
     '151': 'History', '152': 'Geography', '153': 'Civics', '154': 'ICT', '156': 'Career Education'
 };
 
-// ============================================================================
-// ADMIN CREDENTIALS
-// ============================================================================
-const adminUsers = {
-    'admin': 'admin123',
-    'barisalboard': 'board@2025',
-    'dhakaboard': 'dhaka@2025'
-};
+function getStudentsByAdmin(username) {
+    const admin = adminUsers[username];
+    const all = [
+        ...Object.values(studentsData.ssc).map(s => ({ ...s, exam_type: 'SSC', id: s.roll_no })),
+        ...Object.values(studentsData.hsc).map(s => ({ ...s, exam_type: 'HSC', id: s.roll_no }))
+    ];
+    
+    if (admin.role === 'super_admin') return all;
+    return all.filter(s => s.addedBy === username);
+}
 
 // ============================================================================
-// PAGE ROUTES (SERVE HTML)
+// ROUTES - PUBLIC
 // ============================================================================
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, '../admin/login.html'));
-});
-
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, '../admin/login.html')));
 app.get('/admin', (req, res) => {
-    if (!req.session.admin) {
-        return res.redirect('/login');
-    }
+    if (!req.session.admin) return res.redirect('/login');
     res.sendFile(path.join(__dirname, '../admin/admin.html'));
 });
+app.get(['/', '/home'], (req, res) => res.sendFile(path.join(__dirname, '../frontend/home.html')));
 
-app.get('/home', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/home.html'));
-});
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/home.html'));
-});
-
-// ============================================================================
-// API ENDPOINTS - PUBLIC
-// ============================================================================
-
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 app.get('/v2/sub', (req, res) => {
     const subjects = Object.entries(subjectNames).map(([code, name]) => ({ SUB_CODE: code, SUB_NAME: name }));
@@ -136,178 +127,237 @@ app.get('/v2/list', (req, res) => {
     const { id, board } = req.query;
     if (id === 'dlist') {
         const districts = {
-            barisal: [{ name: "BARISAL SADAR", code: "01" }],
             dhaka: [{ name: "DHAKA CITY", code: "01" }, { name: "GAZIPUR", code: "02" }],
-            chittagong: [{ name: "CHITTAGONG CITY", code: "01" }],
             mymensingh: [{ name: "MYMENSINGH SADAR", code: "01" }],
+            barisal: [{ name: "BARISAL SADAR", code: "01" }],
+            chittagong: [{ name: "CHITTAGONG CITY", code: "01" }],
             rajshahi: [{ name: "RAJSHAHI CITY", code: "01" }],
             sylhet: [{ name: "SYLHET CITY", code: "01" }],
             comilla: [{ name: "COMILLA SADAR", code: "01" }],
             jessore: [{ name: "JESSORE SADAR", code: "01" }],
-            dinajpur: [{ name: "DINAJPUR SADAR", code: "01" }],
-            madrasah: [{ name: "MADRASAH BOARD", code: "01" }],
-            tec: [{ name: "TECHNICAL BOARD", code: "01" }]
+            dinajpur: [{ name: "DINAJPUR SADAR", code: "01" }]
         };
         res.json(districts[board] || []);
-    } else {
-        res.json([]);
-    }
+    } else res.json([]);
 });
 
 app.post('/v2/getres', (req, res) => {
-    const { roll, reg, board, exam, year } = req.body;
-    let studentData = null;
+    const { roll, exam } = req.body;
+    let data = null;
     
-    if (exam === 'ssc' && studentsData.ssc[roll]) {
-        studentData = studentsData.ssc[roll];
-    } else if (exam === 'hsc' && studentsData.hsc[roll]) {
-        studentData = studentsData.hsc[roll];
-    } else {
-        if (studentsData.ssc[roll]) studentData = studentsData.ssc[roll];
-        else if (studentsData.hsc[roll]) studentData = studentsData.hsc[roll];
+    if (exam === 'ssc' && studentsData.ssc[roll]) data = studentsData.ssc[roll];
+    else if (exam === 'hsc' && studentsData.hsc[roll]) data = studentsData.hsc[roll];
+    else {
+        if (studentsData.ssc[roll]) data = studentsData.ssc[roll];
+        else if (studentsData.hsc[roll]) data = studentsData.hsc[roll];
     }
     
-    if (studentData) {
-        return res.json({ status: 0, res: studentData });
-    }
-    res.json({ status: 1, msg: 'No result found. Please check your information.' });
+    if (data) res.json({ status: 0, res: data });
+    else res.json({ status: 1, msg: 'No result found' });
 });
 
 // ============================================================================
-// ADMIN AUTHENTICATION
+// AUTHENTICATION
 // ============================================================================
-
 app.post('/admin/login', (req, res) => {
     const { username, password } = req.body;
+    const admin = adminUsers[username];
     
-    if (!username || !password) {
-        return res.json({ success: false, message: 'Username and password required' });
-    }
+    if (!admin) return res.json({ success: false, message: 'Invalid credentials' });
+    if (admin.locked) return res.json({ success: false, message: 'Account locked' });
+    if (admin.password !== password) return res.json({ success: false, message: 'Invalid credentials' });
     
-    if (adminUsers[username] && adminUsers[username] === password) {
-        req.session.admin = true;
-        req.session.adminUser = username;
-        return res.json({ success: true, message: 'Login successful' });
-    }
-    
-    res.json({ success: false, message: 'Invalid username or password' });
+    req.session.admin = true;
+    req.session.adminUser = username;
+    req.session.adminRole = admin.role;
+    res.json({ success: true });
 });
 
 app.get('/admin/check', (req, res) => {
     res.json({ 
         loggedIn: !!req.session.admin,
-        username: req.session.adminUser || null
+        username: req.session.adminUser,
+        role: req.session.adminRole
     });
 });
 
 app.post('/admin/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) return res.json({ success: false, message: 'Logout failed' });
-        res.json({ success: true, message: 'Logged out successfully' });
-    });
+    req.session.destroy();
+    res.json({ success: true });
 });
 
 // ============================================================================
-// STUDENT MANAGEMENT (Protected Routes)
+// ADMIN MANAGEMENT
 // ============================================================================
-
-app.get('/admin/students', (req, res) => {
-    if (!req.session.admin) {
-        return res.status(401).json({ success: false, message: 'Not authenticated' });
+app.get('/admin/admins', (req, res) => {
+    if (!req.session.admin || req.session.adminRole !== 'super_admin') {
+        return res.status(401).json({ success: false });
     }
-    const allStudents = [
-        ...Object.values(studentsData.ssc).map(s => ({ ...s, exam_type: 'SSC', id: s.roll_no })),
-        ...Object.values(studentsData.hsc).map(s => ({ ...s, exam_type: 'HSC', id: s.roll_no }))
-    ];
-    res.json(allStudents);
+    const admins = Object.entries(adminUsers).map(([username, data]) => ({
+        username, name: data.name, role: data.role, email: data.email, locked: data.locked, createdAt: data.createdAt
+    }));
+    res.json(admins);
+});
+
+app.post('/admin/add-subadmin', (req, res) => {
+    if (!req.session.admin || req.session.adminRole !== 'super_admin') {
+        return res.status(401).json({ success: false });
+    }
+    
+    const { username, password, name, email, allowEdit } = req.body;
+    
+    if (!username || !password || !name || !email) {
+        return res.json({ success: false, message: 'All fields required' });
+    }
+    if (adminUsers[username]) {
+        return res.json({ success: false, message: 'Username exists' });
+    }
+    if (password.length < 6) {
+        return res.json({ success: false, message: 'Password 6+ chars' });
+    }
+    
+    adminUsers[username] = {
+        password, role: 'sub_admin', name, email, locked: false,
+        createdBy: req.session.adminUser, createdAt: new Date(), allowEdit
+    };
+    
+    res.json({ success: true, message: 'Sub-admin added' });
+});
+
+app.post('/admin/lock-subadmin', (req, res) => {
+    if (!req.session.admin || req.session.adminRole !== 'super_admin') {
+        return res.status(401).json({ success: false });
+    }
+    
+    const { username, locked } = req.body;
+    if (username === 'admin') return res.json({ success: false, message: 'Cannot lock super admin' });
+    if (!adminUsers[username]) return res.json({ success: false, message: 'Not found' });
+    
+    adminUsers[username].locked = locked;
+    res.json({ success: true });
+});
+
+app.delete('/admin/subadmin/:username', (req, res) => {
+    if (!req.session.admin || req.session.adminRole !== 'super_admin') {
+        return res.status(401).json({ success: false });
+    }
+    
+    const { username } = req.params;
+    if (username === 'admin') return res.json({ success: false });
+    if (!adminUsers[username]) return res.json({ success: false });
+    
+    delete adminUsers[username];
+    res.json({ success: true });
+});
+
+app.post('/admin/change-password', (req, res) => {
+    if (!req.session.admin) return res.status(401).json({ success: false });
+    
+    const { oldPassword, newPassword } = req.body;
+    const username = req.session.adminUser;
+    
+    if (adminUsers[username].password !== oldPassword) {
+        return res.json({ success: false, message: 'Old password incorrect' });
+    }
+    if (newPassword.length < 6) {
+        return res.json({ success: false, message: 'New password 6+ chars' });
+    }
+    
+    adminUsers[username].password = newPassword;
+    res.json({ success: true, message: 'Password changed' });
+});
+
+// ============================================================================
+// STUDENT MANAGEMENT
+// ============================================================================
+app.get('/admin/students', (req, res) => {
+    if (!req.session.admin) return res.status(401).json([]);
+    res.json(getStudentsByAdmin(req.session.adminUser));
 });
 
 app.get('/admin/students/:roll', (req, res) => {
-    if (!req.session.admin) {
-        return res.status(401).json({ success: false, message: 'Not authenticated' });
-    }
+    if (!req.session.admin) return res.status(401).json({ success: false });
+    
     const { roll } = req.params;
     let found = null;
     for (const exam in studentsData) {
         if (studentsData[exam][roll]) {
-            found = { ...studentsData[exam][roll], exam_type: exam.toUpperCase(), id: roll };
+            found = { ...studentsData[exam][roll], exam_type: exam.toUpperCase() };
             break;
         }
     }
+    
     if (found) {
+        const admin = adminUsers[req.session.adminUser];
+        if (admin.role === 'sub_admin' && found.addedBy !== req.session.adminUser) {
+            return res.json({ success: false, message: 'No access' });
+        }
         res.json({ success: true, student: found });
     } else {
-        res.json({ success: false, message: 'Student not found' });
+        res.json({ success: false, message: 'Not found' });
     }
 });
 
 app.put('/admin/students/:roll', (req, res) => {
-    if (!req.session.admin) {
-        return res.status(401).json({ success: false, message: 'Not authenticated' });
-    }
-    const { roll } = req.params;
-    const updatedData = req.body;
+    if (!req.session.admin) return res.status(401).json({ success: false });
     
+    const admin = adminUsers[req.session.adminUser];
+    if (admin.role === 'sub_admin') {
+        return res.json({ success: false, message: 'Sub-admin cannot edit' });
+    }
+    
+    const { roll } = req.params;
     for (const exam in studentsData) {
         if (studentsData[exam][roll]) {
-            studentsData[exam][roll] = { ...studentsData[exam][roll], ...updatedData };
-            return res.json({ success: true, message: 'Student updated successfully' });
+            studentsData[exam][roll] = { ...studentsData[exam][roll], ...req.body };
+            return res.json({ success: true });
         }
     }
-    res.json({ success: false, message: 'Student not found' });
+    res.json({ success: false });
 });
 
 app.post('/admin/students', (req, res) => {
-    if (!req.session.admin) {
-        return res.status(401).json({ success: false, message: 'Not authenticated' });
-    }
+    if (!req.session.admin) return res.status(401).json({ success: false });
+    
     const student = req.body.student;
     if (student && student.roll_no) {
-        const examType = student.exam_type || 'ssc';
-        if (!studentsData[examType]) studentsData[examType] = {};
-        studentsData[examType][student.roll_no] = student;
-        res.json({ success: true, message: 'Student added successfully' });
+        const exam = student.exam_type || 'ssc';
+        if (!studentsData[exam]) studentsData[exam] = {};
+        student.addedBy = req.session.adminUser;
+        studentsData[exam][student.roll_no] = student;
+        res.json({ success: true });
     } else {
-        res.json({ success: false, message: 'Invalid student data' });
+        res.json({ success: false });
     }
 });
 
 app.delete('/admin/students/:id', (req, res) => {
-    if (!req.session.admin) {
-        return res.status(401).json({ success: false, message: 'Not authenticated' });
+    if (!req.session.admin) return res.status(401).json({ success: false });
+    
+    const admin = adminUsers[req.session.adminUser];
+    if (admin.role !== 'super_admin') {
+        return res.json({ success: false });
     }
+    
     const { id } = req.params;
     for (const exam in studentsData) {
         if (studentsData[exam][id]) {
             delete studentsData[exam][id];
-            return res.json({ success: true, message: 'Student deleted' });
+            return res.json({ success: true });
         }
     }
-    res.json({ success: false, message: 'Student not found' });
+    res.json({ success: false });
 });
 
-// ============================================================================
-// 404 HANDLER
-// ============================================================================
 app.use((req, res) => {
     res.status(404).sendFile(path.join(__dirname, '../frontend/home.html'));
 });
 
-// ============================================================================
-// START SERVER
-// ============================================================================
 app.listen(PORT, '0.0.0.0', () => {
     console.log('\n════════════════════════════════════════');
-    console.log('✅ Education Board Result System');
+    console.log('✅ Education Board System');
     console.log('════════════════════════════════════════');
-    console.log('');
-    console.log('🌐 Frontend: http://localhost:3000');
-    console.log('🔐 Login: http://localhost:3000/login');
-    console.log('👤 Credentials: admin / admin123');
-    console.log('');
-    console.log('📌 Test Rolls:');
-    console.log('   SSC: 310285, 827733, 234475');
-    console.log('   HSC: 406020');
+    console.log('🔐 Admin: admin / admin123');
     console.log('════════════════════════════════════════\n');
 });
 
