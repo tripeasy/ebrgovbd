@@ -1,23 +1,39 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "backend/server.js",
-      "use": "@vercel/node"
+    "version": 2,
+    "builds": [
+        {
+            "src": "backend/server.js",
+            "use": "@vercel/node"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "/backend/server.js"
+        },
+        {
+            "src": "/v2/(.*)",
+            "dest": "/backend/server.js"
+        },
+        {
+            "src": "/admin/(.*)",
+            "dest": "/backend/server.js"
+        },
+        {
+            "src": "/login",
+            "dest": "/backend/server.js"
+        },
+        {
+            "src": "/admin",
+            "dest": "/backend/server.js"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/backend/server.js"
+        }
+    ],
+    "env": {
+        "NODE_ENV": "production",
+        "PORT": "3000"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "backend/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "frontend/$1"
-    }
-  ],
-  "env": {
-    "ADMIN_PASSWORD": "@admin_password",
-    "NODE_ENV": "production"
-  }
 }

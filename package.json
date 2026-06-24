@@ -1,15 +1,21 @@
 {
-  "name": "education-board-results",
-  "version": "1.0.0",
-  "description": "Education Board Results System",
+  "name": "www-educationboardresults-gov-bd",
+  "version": "2.0.0",
+  "description": "Education Board Result System",
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js"
+    "vercel-build": "npm install"
   },
   "dependencies": {
     "express": "^4.18.2",
     "express-session": "^1.17.3",
-    "helmet": "^7.2.0"
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "compression": "^1.7.4",
+    "helmet": "^7.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

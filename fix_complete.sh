@@ -1,3 +1,97 @@
+#!/bin/bash
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${BLUE}════════════════════════════════════════${NC}"
+echo -e "${BLUE}🔧 COMPLETE SYSTEM FIX${NC}"
+echo -e "${BLUE}════════════════════════════════════════${NC}"
+echo ""
+
+# ============================================================================
+# 1. FIX PACKAGE.JSON
+# ============================================================================
+echo -e "${GREEN}1️⃣ Fixing package.json...${NC}"
+cat > package.json << 'JSON'
+{
+  "name": "www-educationboardresults-gov-bd",
+  "version": "2.0.0",
+  "description": "Education Board Result System",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "vercel-build": "npm install"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "compression": "^1.7.4",
+    "helmet": "^7.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+JSON
+echo -e "${GREEN}✅ package.json fixed${NC}"
+
+# ============================================================================
+# 2. FIX VERCEL.JSON
+# ============================================================================
+echo -e "${GREEN}2️⃣ Fixing vercel.json...${NC}"
+cat > vercel.json << 'JSON'
+{
+    "version": 2,
+    "builds": [
+        {
+            "src": "backend/server.js",
+            "use": "@vercel/node"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "/backend/server.js"
+        },
+        {
+            "src": "/v2/(.*)",
+            "dest": "/backend/server.js"
+        },
+        {
+            "src": "/admin/(.*)",
+            "dest": "/backend/server.js"
+        },
+        {
+            "src": "/login",
+            "dest": "/backend/server.js"
+        },
+        {
+            "src": "/admin",
+            "dest": "/backend/server.js"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/backend/server.js"
+        }
+    ],
+    "env": {
+        "NODE_ENV": "production",
+        "PORT": "3000"
+    }
+}
+JSON
+echo -e "${GREEN}✅ vercel.json fixed${NC}"
+
+# ============================================================================
+# 3. COMPLETE BACKEND SERVER FIX
+# ============================================================================
+echo -e "${GREEN}3️⃣ Fixing backend/server.js...${NC}"
+cat > backend/server.js << 'JS'
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
@@ -312,3 +406,191 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 module.exports = app;
+JS
+echo -e "${GREEN}✅ backend/server.js fixed${NC}"
+
+# ============================================================================
+# 4. FIX LOGIN.HTML
+# ============================================================================
+echo -e "${GREEN}4️⃣ Fixing admin/login.html...${NC}"
+cat > admin/login.html << 'HTML'
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Login - Education Board</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #006a4e, #00843d); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-container { background: white; border-radius: 20px; box-shadow: 0 10px 50px rgba(0,0,0,0.3); width: 100%; max-width: 450px; overflow: hidden; }
+        .login-header { background: linear-gradient(135deg, #006a4e, #00843d); color: white; padding: 40px 30px; text-align: center; }
+        .login-header h2 { font-size: 24px; margin-bottom: 10px; }
+        .login-header p { opacity: 0.9; font-size: 14px; }
+        .login-body { padding: 40px 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 14px; }
+        input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
+        input:focus { outline: none; border-color: #006a4e; box-shadow: 0 0 0 3px rgba(0,106,78,0.1); }
+        .btn-login { width: 100%; padding: 14px; background: linear-gradient(135deg, #006a4e, #00843d); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,106,78,0.3); }
+        .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+        .error-msg { background: #f8d7da; color: #721c24; padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; display: none; border: 1px solid #f5c6cb; }
+        .success-msg { background: #d4edda; color: #155724; padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; display: none; border: 1px solid #c3e6cb; }
+        .login-footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; }
+        .loading { display: none; }
+        @media (max-width: 480px) { .login-container { margin: 20px; } .login-header { padding: 30px 20px; } .login-body { padding: 30px 20px; } }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <div class="login-header">
+        <h2>🎓 Education Board</h2>
+        <p>Admin Management System</p>
+    </div>
+    <div class="login-body">
+        <div id="errorMsg" class="error-msg"></div>
+        <div id="successMsg" class="success-msg"></div>
+        
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autofocus autocomplete="off" placeholder="Enter username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter password">
+            </div>
+            
+            <button type="submit" class="btn-login" id="loginBtn">
+                <span class="login-text">Login to Dashboard</span>
+                <span class="loading" id="loader">Logging in...</span>
+            </button>
+        </form>
+    </div>
+    
+    <div class="login-footer">
+        <p><strong>Demo Account:</strong></p>
+        <p>Username: <strong>admin</strong></p>
+        <p>Password: <strong>admin123</strong></p>
+        <hr style="margin: 10px 0; border: none; border-top: 1px solid #ddd;">
+        <p>© Bangladesh Education Board | All rights reserved</p>
+    </div>
+</div>
+
+<script>
+async function handleLogin(event) {
+    event.preventDefault();
+    
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const errorDiv = document.getElementById('errorMsg');
+    const successDiv = document.getElementById('successMsg');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginText = document.querySelector('.login-text');
+    const loader = document.getElementById('loader');
+    
+    // Reset messages
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+    
+    // Disable button
+    loginBtn.disabled = true;
+    loginText.style.display = 'none';
+    loader.style.display = 'inline';
+    
+    try {
+        console.log('Attempting login with:', { username });
+        
+        const response = await fetch('/admin/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ username, password })
+        });
+        
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (data.success) {
+            successDiv.innerHTML = '✅ Login successful! Redirecting...';
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                window.location.href = '/admin';
+            }, 1500);
+        } else {
+            errorDiv.innerHTML = `❌ ${data.message || 'Login failed. Please try again.'}`;
+            errorDiv.style.display = 'block';
+            loginBtn.disabled = false;
+            loginText.style.display = 'inline';
+            loader.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        errorDiv.innerHTML = `❌ Connection error: ${error.message}`;
+        errorDiv.style.display = 'block';
+        loginBtn.disabled = false;
+        loginText.style.display = 'inline';
+        loader.style.display = 'none';
+    }
+}
+
+// Focus username on load
+window.addEventListener('load', () => {
+    document.getElementById('username').focus();
+});
+</script>
+</body>
+</html>
+HTML
+echo -e "${GREEN}✅ login.html fixed${NC}"
+
+# ============================================================================
+# 5. NPM INSTALL
+# ============================================================================
+echo -e "${GREEN}5️⃣ Installing npm dependencies...${NC}"
+npm install
+echo -e "${GREEN}✅ npm install complete${NC}"
+
+# ============================================================================
+# 6. GIT COMMIT AND PUSH
+# ============================================================================
+echo -e "${GREEN}6️⃣ Committing and pushing to GitHub...${NC}"
+git add .
+git commit -m "Fix: Complete system fix - login, backend, frontend configuration"
+git push origin main
+echo -e "${GREEN}✅ Pushed to GitHub${NC}"
+
+# ============================================================================
+# 7. VERCEL DEPLOY
+# ============================================================================
+echo -e "${GREEN}7️⃣ Deploying to Vercel...${NC}"
+npx vercel --prod --yes
+echo -e "${GREEN}✅ Deployed to Vercel${NC}"
+
+# ============================================================================
+# FINAL SUMMARY
+# ============================================================================
+echo ""
+echo -e "${BLUE}════════════════════════════════════════${NC}"
+echo -e "${GREEN}✅ ALL FIXES COMPLETE!${NC}"
+echo -e "${BLUE}════════════════════════════════════════${NC}"
+echo ""
+echo -e "${YELLOW}🌐 Live URLs:${NC}"
+echo "  📚 Main: https://www-educationboardresults-gov-bd.vercel.app"
+echo "  🔐 Login: https://www-educationboardresults-gov-bd.vercel.app/login"
+echo "  👤 Admin: https://www-educationboardresults-gov-bd.vercel.app/admin"
+echo ""
+echo -e "${YELLOW}🔑 Credentials:${NC}"
+echo "  Username: admin"
+echo "  Password: admin123"
+echo ""
+echo -e "${YELLOW}📌 Test Rolls:${NC}"
+echo "  SSC: 310285, 827733, 234475"
+echo "  HSC: 406020"
+echo ""
+echo -e "${BLUE}════════════════════════════════════════${NC}"
