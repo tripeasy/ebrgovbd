@@ -87,15 +87,24 @@
                     <div class="col-md-6"><input type="text" name="fname" class="form-control" placeholder="Father's Name"></div>
                 </div>
                 <div class="row">
+                    <div class="col-md-6"><input type="text" name="mname" class="form-control" placeholder="Mother's Name"></div>
+                    <div class="col-md-6"><input type="text" name="board_name" class="form-control" placeholder="Board Name"></div>
+                </div>
+                <div class="row">
                     <div class="col-md-4"><select name="exam_type" class="form-control" required><option value="">Exam Type</option><option value="ssc">SSC</option><option value="hsc">HSC</option></select></div>
                     <div class="col-md-4"><input type="text" name="year" class="form-control" placeholder="Year"></div>
                     <div class="col-md-4"><input type="text" name="gpa" class="form-control" placeholder="GPA"></div>
                 </div>
                 <div class="row">
                     <div class="col-md-6"><input type="text" name="inst_name" class="form-control" placeholder="Institute Name"></div>
-                    <div class="col-md-6"><input type="text" name="board_name" class="form-control" placeholder="Board Name"></div>
+                    <div class="col-md-6"><input type="text" name="stud_group" class="form-control" placeholder="Group (Science/Arts/Commerce)"></div>
                 </div>
-                <textarea name="display_details" rows="3" class="form-control" placeholder="Subject details (101:85=A+,...)"></textarea>
+                <div class="row">
+                    <div class="col-md-4"><input type="text" name="stud_sex" class="form-control" placeholder="Gender (Male/Female)"></div>
+                    <div class="col-md-4"><input type="text" name="dob" class="form-control" placeholder="Date of Birth (DD-MM-YYYY)"></div>
+                    <div class="col-md-4"><input type="text" name="eiin" class="form-control" placeholder="EIIN Number"></div>
+                </div>
+                <textarea name="display_details" rows="3" class="form-control" placeholder="Subject details (101:85=A+,102:88=A+,...)"></textarea>
                 <button type="submit" class="btn-primary" style="margin-top: 15px; width: 100%;">Add Student</button>
                 <div id="addMsg" style="margin-top: 10px;"></div>
             </form>
@@ -215,18 +224,19 @@ function updateStats() {
 function displayStudents(students) {
     const html = `
         <thead>
-            <tr><th>Roll</th><th>Name</th><th>Board</th><th>Exam</th><th>Year</th><th>GPA</th><th>Institute</th><th>Actions</th></tr>
+            <tr><th>Roll</th><th>Name</th><th>Father</th><th>Mother</th><th>Board</th><th>Exam</th><th>Year</th><th>GPA</th><th>Actions</th></tr>
         </thead>
         <tbody>
             ${students.map(s => `
                 <tr>
                     <td>${s.roll_no}</td>
                     <td>${s.name}</td>
+                    <td>${s.fname || '-'}</td>
+                    <td>${s.mname || '-'}</td>
                     <td>${s.board_name}</td>
                     <td>${s.exam_type}</td>
                     <td>${s.year}</td>
                     <td>${s.gpa}</td>
-                    <td>${s.inst_name || '-'}</td>
                     <td>
                         <button class="btn-sm btn-warning" onclick="editStudent('${s.roll_no}')"><i class="fa fa-edit"></i></button>
                         ${isSuperAdmin ? `<button class="btn-sm btn-danger" onclick="deleteStudent('${s.roll_no}')"><i class="fa fa-trash"></i></button>` : ''}
@@ -240,7 +250,7 @@ function displayStudents(students) {
 
 document.getElementById('searchInput')?.addEventListener('keyup', function(e) {
     const search = e.target.value.toLowerCase();
-    const filtered = studentsData.filter(s => s.roll_no.includes(search) || s.name.toLowerCase().includes(search));
+    const filtered = studentsData.filter(s => s.roll_no.includes(search) || s.name.toLowerCase().includes(search) || (s.mname && s.mname.toLowerCase().includes(search)));
     displayStudents(filtered);
 });
 
@@ -303,7 +313,7 @@ document.getElementById('addStudentForm')?.addEventListener('submit', async func
     const result = await res.json();
     
     if (result.success) {
-        document.getElementById('addMsg').innerHTML = '<div class="alert alert-success">Added!</div>';
+        document.getElementById('addMsg').innerHTML = '<div class="alert alert-success">✅ Student added successfully!</div>';
         e.target.reset();
         loadStudents();
         setTimeout(() => document.getElementById('addMsg').innerHTML = '', 3000);
