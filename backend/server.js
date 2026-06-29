@@ -164,7 +164,7 @@ app.post('/admin/login', (req, res) => {
     const admin = adminUsers[username];
     
     if (!admin) return res.json({ success: false, message: 'Invalid credentials' });
-    if (admin.locked) return res.json({ success: false, message: 'Account locked' });
+    if (admin.locked) return res.json({ success: false, message: 'Account locked. Contact super admin.' });
     if (admin.password !== password) return res.json({ success: false, message: 'Invalid credentials' });
     
     req.session.admin = true;
@@ -213,7 +213,7 @@ app.post('/admin/add-subadmin', (req, res) => {
         return res.json({ success: false, message: 'Username exists' });
     }
     if (password.length < 6) {
-        return res.json({ success: false, message: 'Password 6+ chars' });
+        return res.json({ success: false, message: 'Password must be at least 6 characters' });
     }
     
     adminUsers[username] = {
@@ -221,7 +221,7 @@ app.post('/admin/add-subadmin', (req, res) => {
         createdBy: req.session.adminUser, createdAt: new Date(), allowEdit
     };
     
-    res.json({ success: true, message: 'Sub-admin added' });
+    res.json({ success: true, message: 'Sub-admin added successfully' });
 });
 
 app.post('/admin/lock-subadmin', (req, res) => {
@@ -231,7 +231,7 @@ app.post('/admin/lock-subadmin', (req, res) => {
     
     const { username, locked } = req.body;
     if (username === 'admin') return res.json({ success: false, message: 'Cannot lock super admin' });
-    if (!adminUsers[username]) return res.json({ success: false, message: 'Not found' });
+    if (!adminUsers[username]) return res.json({ success: false, message: 'Admin not found' });
     
     adminUsers[username].locked = locked;
     res.json({ success: true });
@@ -243,28 +243,36 @@ app.delete('/admin/subadmin/:username', (req, res) => {
     }
     
     const { username } = req.params;
-    if (username === 'admin') return res.json({ success: false });
-    if (!adminUsers[username]) return res.json({ success: false });
+    if (username === 'admin') return res.json({ success: false, message: 'Cannot delete super admin' });
+    if (!adminUsers[username]) return res.json({ success: false, message: 'Admin not found' });
     
     delete adminUsers[username];
     res.json({ success: true });
 });
 
+// ============================================================================
+// PASSWORD CHANGE - For any logged in admin
+// ============================================================================
 app.post('/admin/change-password', (req, res) => {
-    if (!req.session.admin) return res.status(401).json({ success: false });
+    if (!req.session.admin) return res.status(401).json({ success: false, message: 'Not logged in' });
     
     const { oldPassword, newPassword } = req.body;
     const username = req.session.adminUser;
     
-    if (adminUsers[username].password !== oldPassword) {
-        return res.json({ success: false, message: 'Old password incorrect' });
+    if (!adminUsers[username]) {
+        return res.json({ success: false, message: 'User not found' });
     }
+    
+    if (adminUsers[username].password !== oldPassword) {
+        return res.json({ success: false, message: 'Current password is incorrect' });
+    }
+    
     if (newPassword.length < 6) {
-        return res.json({ success: false, message: 'New password 6+ chars' });
+        return res.json({ success: false, message: 'New password must be at least 6 characters' });
     }
     
     adminUsers[username].password = newPassword;
-    res.json({ success: true, message: 'Password changed' });
+    res.json({ success: true, message: 'Password changed successfully' });
 });
 
 // ============================================================================
@@ -290,11 +298,11 @@ app.get('/admin/students/:roll', (req, res) => {
     if (found) {
         const admin = adminUsers[req.session.adminUser];
         if (admin.role === 'sub_admin' && found.addedBy !== req.session.adminUser) {
-            return res.json({ success: false, message: 'No access' });
+            return res.json({ success: false, message: 'No access to this student' });
         }
         res.json({ success: true, student: found });
     } else {
-        res.json({ success: false, message: 'Not found' });
+        res.json({ success: false, message: 'Student not found' });
     }
 });
 
@@ -302,8 +310,8 @@ app.put('/admin/students/:roll', (req, res) => {
     if (!req.session.admin) return res.status(401).json({ success: false });
     
     const admin = adminUsers[req.session.adminUser];
-    if (admin.role === 'sub_admin') {
-        return res.json({ success: false, message: 'Sub-admin cannot edit' });
+    if (admin.role === 'sub_admin' && !admin.allowEdit) {
+        return res.json({ success: false, message: 'Sub-admin does not have edit permissions' });
     }
     
     const { roll } = req.params;
@@ -313,7 +321,7 @@ app.put('/admin/students/:roll', (req, res) => {
             return res.json({ success: true });
         }
     }
-    res.json({ success: false });
+    res.json({ success: false, message: 'Student not found' });
 });
 
 app.post('/admin/students', (req, res) => {
@@ -327,7 +335,7 @@ app.post('/admin/students', (req, res) => {
         studentsData[exam][student.roll_no] = student;
         res.json({ success: true });
     } else {
-        res.json({ success: false });
+        res.json({ success: false, message: 'Invalid student data' });
     }
 });
 
@@ -336,7 +344,7 @@ app.delete('/admin/students/:id', (req, res) => {
     
     const admin = adminUsers[req.session.adminUser];
     if (admin.role !== 'super_admin') {
-        return res.json({ success: false });
+        return res.json({ success: false, message: 'Only super admin can delete' });
     }
     
     const { id } = req.params;
@@ -346,7 +354,7 @@ app.delete('/admin/students/:id', (req, res) => {
             return res.json({ success: true });
         }
     }
-    res.json({ success: false });
+    res.json({ success: false, message: 'Student not found' });
 });
 
 app.use((req, res) => {
@@ -357,7 +365,8 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('\n════════════════════════════════════════');
     console.log('✅ Education Board System');
     console.log('════════════════════════════════════════');
-    console.log('🔐 Admin: admin / admin123');
+    console.log('🔐 Admin Login: admin / admin123');
+    console.log('   (Change password after first login)');
     console.log('════════════════════════════════════════\n');
 });
 

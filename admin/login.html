@@ -4,129 +4,152 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin Login - Education Board</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #006a4e, #00843d); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .login-container { background: white; border-radius: 20px; box-shadow: 0 10px 50px rgba(0,0,0,0.3); width: 100%; max-width: 450px; overflow: hidden; }
-        .login-header { background: linear-gradient(135deg, #006a4e, #00843d); color: white; padding: 40px 30px; text-align: center; }
-        .login-header h2 { font-size: 24px; margin-bottom: 10px; }
-        .login-header p { opacity: 0.9; font-size: 14px; }
-        .login-body { padding: 40px 30px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 14px; }
-        input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
-        input:focus { outline: none; border-color: #006a4e; box-shadow: 0 0 0 3px rgba(0,106,78,0.1); }
-        .btn-login { width: 100%; padding: 14px; background: linear-gradient(135deg, #006a4e, #00843d); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,106,78,0.3); }
-        .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
-        .error-msg { background: #f8d7da; color: #721c24; padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; display: none; border: 1px solid #f5c6cb; }
-        .success-msg { background: #d4edda; color: #155724; padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; display: none; border: 1px solid #c3e6cb; }
-        .login-footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; }
-        .loading { display: none; }
-        @media (max-width: 480px) { .login-container { margin: 20px; } .login-header { padding: 30px 20px; } .login-body { padding: 30px 20px; } }
+        body {
+            background: linear-gradient(135deg, #006a4e, #00843d);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-header h2 {
+            color: #006a4e;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        .login-header .icon {
+            font-size: 48px;
+            color: #006a4e;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-control {
+            border-radius: 8px;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            border-color: #006a4e;
+            box-shadow: 0 0 0 3px rgba(0,106,78,0.1);
+        }
+        .btn-login {
+            background: #006a4e;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-login:hover {
+            background: #005a42;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,106,78,0.3);
+        }
+        .alert {
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .footer-text {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 13px;
+        }
+        .footer-text a {
+            color: #006a4e;
+            text-decoration: none;
+        }
+        .footer-text a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-<div class="login-container">
-    <div class="login-header">
-        <h2>🎓 Education Board</h2>
-        <p>Admin Management System</p>
-    </div>
-    <div class="login-body">
-        <div id="errorMsg" class="error-msg"></div>
-        <div id="successMsg" class="success-msg"></div>
+    <div class="login-container">
+        <div class="login-header">
+            <i class="fa fa-graduation-cap icon"></i>
+            <h2>Education Board Admin</h2>
+            <p style="color: #666;">Enter your credentials to login</p>
+        </div>
         
-        <form id="loginForm" onsubmit="handleLogin(event)">
+        <form id="loginForm">
             <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required autofocus autocomplete="off" placeholder="Enter username">
+                <input type="text" id="username" class="form-control" placeholder="Username" required>
             </div>
-            
             <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="Enter password">
+                <input type="password" id="password" class="form-control" placeholder="Password" required>
             </div>
-            
-            <button type="submit" class="btn-login" id="loginBtn">
-                <span class="login-text">Login to Dashboard</span>
-                <span class="loading" id="loader">Logging in...</span>
+            <button type="submit" class="btn-login">
+                <i class="fa fa-sign-in"></i> Login
             </button>
+            <div id="loginMsg" style="margin-top: 15px;"></div>
         </form>
-    </div>
-    
-    <div class="login-footer">
-        <p><strong>Demo Account:</strong></p>
-        <p>Username: <strong>admin</strong></p>
-        <p>Password: <strong>admin123</strong></p>
-        <hr style="margin: 10px 0; border: none; border-top: 1px solid #ddd;">
-        <p>© Bangladesh Education Board | All rights reserved</p>
-    </div>
-</div>
-
-<script>
-async function handleLogin(event) {
-    event.preventDefault();
-    
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-    const errorDiv = document.getElementById('errorMsg');
-    const successDiv = document.getElementById('successMsg');
-    const loginBtn = document.getElementById('loginBtn');
-    const loginText = document.querySelector('.login-text');
-    const loader = document.getElementById('loader');
-    
-    // Reset messages
-    errorDiv.style.display = 'none';
-    successDiv.style.display = 'none';
-    
-    // Disable button
-    loginBtn.disabled = true;
-    loginText.style.display = 'none';
-    loader.style.display = 'inline';
-    
-    try {
-        console.log('Attempting login with:', { username });
         
-        const response = await fetch('/admin/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({ username, password })
+        <div class="footer-text">
+            <p>© 2026 Education Board. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const msgDiv = document.getElementById('loginMsg');
+            
+            msgDiv.innerHTML = '<div class="alert alert-info"><i class="fa fa-spinner fa-spin"></i> Logging in...</div>';
+            
+            try {
+                const response = await fetch('/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    msgDiv.innerHTML = '<div class="alert alert-success">Login successful! Redirecting...</div>';
+                    setTimeout(() => {
+                        window.location.href = '/admin';
+                    }, 1000);
+                } else {
+                    msgDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                }
+            } catch (error) {
+                msgDiv.innerHTML = '<div class="alert alert-danger">Connection error. Please try again.</div>';
+            }
         });
-        
-        console.log('Response status:', response.status);
-        const data = await response.json();
-        console.log('Response data:', data);
-        
-        if (data.success) {
-            successDiv.innerHTML = '✅ Login successful! Redirecting...';
-            successDiv.style.display = 'block';
-            setTimeout(() => {
-                window.location.href = '/admin';
-            }, 1500);
-        } else {
-            errorDiv.innerHTML = `❌ ${data.message || 'Login failed. Please try again.'}`;
-            errorDiv.style.display = 'block';
-            loginBtn.disabled = false;
-            loginText.style.display = 'inline';
-            loader.style.display = 'none';
-        }
-    } catch (error) {
-        console.error('Login error:', error);
-        errorDiv.innerHTML = `❌ Connection error: ${error.message}`;
-        errorDiv.style.display = 'block';
-        loginBtn.disabled = false;
-        loginText.style.display = 'inline';
-        loader.style.display = 'none';
-    }
-}
 
-// Focus username on load
-window.addEventListener('load', () => {
-    document.getElementById('username').focus();
-});
-</script>
+        // Enter key support
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
 </body>
 </html>
